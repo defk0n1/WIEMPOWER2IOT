@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Node-RED Gateway
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red-gateway
+    ports:
+      - "1880:1880"
+    volumes:
+      - node-red-data:/data
+      - ./node-red/flows.json:/data/flows.json
+    environment:
+      - TZ=UTC
+      - MQTT_BROKER=${MQTT_BROKER:-localhost}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+    network_mode: host
+    restart: unless-stopped
+
+  # NPK Sensor Emulator
+  npk-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: npk-sensor
+    environment:
+      - SENSOR_TYPE=npk
+      - MQTT_BROKER=${MQTT_BROKER:-localhost}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - SENSOR_INTERVAL=5
+      - MQTT_USER=${MQTT_USER:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+    volumes:
+      - ./sensors:/app
+    command: python /app/npk_sensor.py
+    network_mode: host
+    restart: unless-stopped
+
+  # Temperature Sensor Emulator
+  temp-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: temp-sensor
+    environment:
+      - SENSOR_TYPE=temperature
+      - MQTT_BROKER=${MQTT_BROKER:-localhost}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - SENSOR_INTERVAL=3
+      - MQTT_USER=${MQTT_USER:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+    volumes:
+      - ./sensors:/app
+    command: python /app/temperature_sensor.py
+    network_mode: host
+    restart: unless-stopped
+
+  # Water Level Sensor Emulator
+  water-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: water-sensor
+    environment:
+      - SENSOR_TYPE=water_level
+      - MQTT_BROKER=${MQTT_BROKER:-localhost}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - SENSOR_INTERVAL=4
+      - MQTT_USER=${MQTT_USER:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+    volumes:
+      - ./sensors:/app
+    command: python /app/water_level_sensor.py
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  node-red-data:
