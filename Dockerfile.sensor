@@ -4,10 +4,7 @@ WORKDIR /app
 
 # Install required Python packages
 RUN pip install --no-cache-dir \
-    paho-mqtt==1.6.1 \
+    requests==2.31.0 \
     numpy==1.24.3
 
-# Copy sensor scripts
-COPY sensors/ /app/
-
-CMD ["python"]
+CMD ["python", "-u"]
