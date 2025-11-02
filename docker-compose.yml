@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red-gateway
+    ports:
+      - "1880:1880"
+    volumes:
+      - node-red-data:/data
+    networks:
+      - wiempower2_irrigation-network
+    restart: unless-stopped
+
+  npk-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: npk-sensor
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GATEWAY_URL=http://node-red-gateway:1880
+      - SENSOR_INTERVAL=5
+      - ZONE_ID=zone-1
+      - SENSOR_DEPTH_CM=15
+    volumes:
+      - ./sensors:/app:ro
+    working_dir: /app
+    command: ["python", "-u", "npk_sensor.py"]
+    networks:
+      - wiempower2_irrigation-network
+    depends_on:
+      - node-red
+    restart: unless-stopped
+
+  temp-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: temp-sensor
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GATEWAY_URL=http://node-red-gateway:1880
+      - SENSOR_INTERVAL=3
+      - ZONE_ID=zone-1
+      - SENSOR_DEPTH_CM=10
+    volumes:
+      - ./sensors:/app:ro
+    working_dir: /app
+    command: ["python", "-u", "temperature_sensor.py"]
+    networks:
+      - wiempower2_irrigation-network
+    depends_on:
+      - node-red
+    restart: unless-stopped
+
+  water-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: water-sensor
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GATEWAY_URL=http://node-red-gateway:1880
+      - SENSOR_INTERVAL=4
+      - TANK_RADIUS_CM=50
+    volumes:
+      - ./sensors:/app:ro
+    working_dir: /app
+    command: ["python", "-u", "water_level_sensor.py"]
+    networks:
+      - wiempower2_irrigation-network
+    depends_on:
+      - node-red
+    restart: unless-stopped
+
+  humidity-sensor:
+    build:
+      context: .
+      dockerfile: Dockerfile.sensor
+    container_name: humidity-sensor
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GATEWAY_URL=http://node-red-gateway:1880
+      - SENSOR_INTERVAL=5
+      - ZONE_ID=zone-1
+    volumes:
+      - ./sensors:/app:ro
+    working_dir: /app
+    command: ["python", "-u", "humidity_sensor.py"]
+    networks:
+      - wiempower2_irrigation-network
+    depends_on:
+      - node-red
+    restart: unless-stopped
+
+networks:
+  wiempower2_irrigation-network:
+    external: true
+
+volumes:
+  node-red-data:
